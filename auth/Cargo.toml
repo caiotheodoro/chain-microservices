@@ -1,10 +1,7 @@
 [package]
-name = "auth"
+name = "auth-microservice"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 
 [dependencies]
 tonic = "0.11"
@@ -17,9 +14,11 @@ diesel = { version = "2.1.3", features = ["postgres", "r2d2"] }
 dotenvy = "0.15.7"
 bcrypt = "0.15.0"
 jwt = "0.16.0"
+protobuf = "3.3.0"
+protos = { path = "./gen" }
 hmac = "0.12.1"
 sha2 = "0.10.8"
-serde = "1.0.190"
+serde = "1.0"
 
-[build-dependencies]
-tonic-build = "0.11"
+[workspace]
+members = ["gen"]
