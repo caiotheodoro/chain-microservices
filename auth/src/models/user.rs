@@ -24,20 +24,9 @@ pub struct NewUser<'a> {
 }
 
 impl User {
-    pub fn create(
-        conn: &mut PgConnection,
-        username: &str,
-        email: &str,
-        password: &str,
-    ) -> Result<User, diesel::result::Error> {
-        let new_user = NewUser {
-            username,
-            email,
-            password,
-        };
-
+    pub fn create(conn: &mut PgConnection, user: NewUser) -> Result<User, diesel::result::Error> {
         diesel::insert_into(users::table)
-            .values(new_user)
+            .values(user)
             .returning(User::as_returning())
             .get_result(conn)
     }
