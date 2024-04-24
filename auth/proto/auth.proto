@@ -3,20 +3,25 @@ syntax = "proto3";
 package authentication;
 
 message AccessToken {
-    string access_token = 1;
+  string access_token = 1;
 }
 message RegisterRequest {
-    string username = 1;
-    string email = 2;
-    string password = 3;
+  string username = 1;
+  string email = 2;
+  string password = 3;
 }
-message LoginRequest {
-    string email = 1;
-    string password = 2;
+message LoginByEmailRequest {
+  string email = 2;
+  string password = 3;
 }
 
+message LoginByUsernameRequest {
+  string username = 1;
+  string password = 3;
+}
 
 service Auth {
-    rpc Register (RegisterRequest) returns (AccessToken);
-    rpc Login (LoginRequest) returns (AccessToken);
+  rpc Register(RegisterRequest) returns (AccessToken);
+  rpc LoginByEmail(LoginByEmailRequest) returns (AccessToken);
+  rpc LoginByUsername(LoginByUsernameRequest) returns (AccessToken);
 }
