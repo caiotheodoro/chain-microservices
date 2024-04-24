@@ -109,9 +109,9 @@ pub mod auth_client {
             self.inner.unary(req, path, codec).await
         }
         ///
-        pub async fn login(
+        pub async fn login_by_email(
             &mut self,
-            request: impl tonic::IntoRequest<super::LoginRequest>,
+            request: impl tonic::IntoRequest<super::LoginByEmailRequest>,
         ) -> std::result::Result<tonic::Response<super::AccessToken>, tonic::Status> {
             self.inner
                 .ready()
@@ -124,10 +124,34 @@ pub mod auth_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/authentication.Auth/Login",
+                "/authentication.Auth/LoginByEmail",
             );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("authentication.Auth", "Login"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("authentication.Auth", "LoginByEmail"));
+            self.inner.unary(req, path, codec).await
+        }
+        ///
+        pub async fn login_by_username(
+            &mut self,
+            request: impl tonic::IntoRequest<super::LoginByUsernameRequest>,
+        ) -> std::result::Result<tonic::Response<super::AccessToken>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/authentication.Auth/LoginByUsername",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("authentication.Auth", "LoginByUsername"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -145,9 +169,14 @@ pub mod auth_server {
             request: tonic::Request<super::RegisterRequest>,
         ) -> std::result::Result<tonic::Response<super::AccessToken>, tonic::Status>;
         ///
-        async fn login(
+        async fn login_by_email(
             &self,
-            request: tonic::Request<super::LoginRequest>,
+            request: tonic::Request<super::LoginByEmailRequest>,
+        ) -> std::result::Result<tonic::Response<super::AccessToken>, tonic::Status>;
+        ///
+        async fn login_by_username(
+            &self,
+            request: tonic::Request<super::LoginByUsernameRequest>,
         ) -> std::result::Result<tonic::Response<super::AccessToken>, tonic::Status>;
     }
     ///
@@ -274,11 +303,11 @@ pub mod auth_server {
                     };
                     Box::pin(fut)
                 }
-                "/authentication.Auth/Login" => {
+                "/authentication.Auth/LoginByEmail" => {
                     #[allow(non_camel_case_types)]
-                    struct LoginSvc<T: Auth>(pub Arc<T>);
-                    impl<T: Auth> tonic::server::UnaryService<super::LoginRequest>
-                    for LoginSvc<T> {
+                    struct LoginByEmailSvc<T: Auth>(pub Arc<T>);
+                    impl<T: Auth> tonic::server::UnaryService<super::LoginByEmailRequest>
+                    for LoginByEmailSvc<T> {
                         type Response = super::AccessToken;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -286,11 +315,11 @@ pub mod auth_server {
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::LoginRequest>,
+                            request: tonic::Request<super::LoginByEmailRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Auth>::login(&inner, request).await
+                                <T as Auth>::login_by_email(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -302,7 +331,53 @@ pub mod auth_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let inner = inner.0;
-                        let method = LoginSvc(inner);
+                        let method = LoginByEmailSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/authentication.Auth/LoginByUsername" => {
+                    #[allow(non_camel_case_types)]
+                    struct LoginByUsernameSvc<T: Auth>(pub Arc<T>);
+                    impl<
+                        T: Auth,
+                    > tonic::server::UnaryService<super::LoginByUsernameRequest>
+                    for LoginByUsernameSvc<T> {
+                        type Response = super::AccessToken;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::LoginByUsernameRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as Auth>::login_by_username(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = LoginByUsernameSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

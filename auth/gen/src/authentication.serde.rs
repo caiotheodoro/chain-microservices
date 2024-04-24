@@ -91,7 +91,7 @@ impl<'de> serde::Deserialize<'de> for AccessToken {
         deserializer.deserialize_struct("authentication.AccessToken", FIELDS, GeneratedVisitor)
     }
 }
-impl serde::Serialize for LoginRequest {
+impl serde::Serialize for LoginByEmailRequest {
     #[allow(deprecated)]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
@@ -105,7 +105,7 @@ impl serde::Serialize for LoginRequest {
         if !self.password.is_empty() {
             len += 1;
         }
-        let mut struct_ser = serializer.serialize_struct("authentication.LoginRequest", len)?;
+        let mut struct_ser = serializer.serialize_struct("authentication.LoginByEmailRequest", len)?;
         if !self.email.is_empty() {
             struct_ser.serialize_field("email", &self.email)?;
         }
@@ -115,7 +115,7 @@ impl serde::Serialize for LoginRequest {
         struct_ser.end()
     }
 }
-impl<'de> serde::Deserialize<'de> for LoginRequest {
+impl<'de> serde::Deserialize<'de> for LoginByEmailRequest {
     #[allow(deprecated)]
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
@@ -162,13 +162,13 @@ impl<'de> serde::Deserialize<'de> for LoginRequest {
         }
         struct GeneratedVisitor;
         impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = LoginRequest;
+            type Value = LoginByEmailRequest;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct authentication.LoginRequest")
+                formatter.write_str("struct authentication.LoginByEmailRequest")
             }
 
-            fn visit_map<V>(self, mut map_: V) -> std::result::Result<LoginRequest, V::Error>
+            fn visit_map<V>(self, mut map_: V) -> std::result::Result<LoginByEmailRequest, V::Error>
                 where
                     V: serde::de::MapAccess<'de>,
             {
@@ -190,13 +190,121 @@ impl<'de> serde::Deserialize<'de> for LoginRequest {
                         }
                     }
                 }
-                Ok(LoginRequest {
+                Ok(LoginByEmailRequest {
                     email: email__.unwrap_or_default(),
                     password: password__.unwrap_or_default(),
                 })
             }
         }
-        deserializer.deserialize_struct("authentication.LoginRequest", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("authentication.LoginByEmailRequest", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for LoginByUsernameRequest {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if !self.username.is_empty() {
+            len += 1;
+        }
+        if !self.password.is_empty() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("authentication.LoginByUsernameRequest", len)?;
+        if !self.username.is_empty() {
+            struct_ser.serialize_field("username", &self.username)?;
+        }
+        if !self.password.is_empty() {
+            struct_ser.serialize_field("password", &self.password)?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for LoginByUsernameRequest {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "username",
+            "password",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            Username,
+            Password,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "username" => Ok(GeneratedField::Username),
+                            "password" => Ok(GeneratedField::Password),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = LoginByUsernameRequest;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct authentication.LoginByUsernameRequest")
+            }
+
+            fn visit_map<V>(self, mut map_: V) -> std::result::Result<LoginByUsernameRequest, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut username__ = None;
+                let mut password__ = None;
+                while let Some(k) = map_.next_key()? {
+                    match k {
+                        GeneratedField::Username => {
+                            if username__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("username"));
+                            }
+                            username__ = Some(map_.next_value()?);
+                        }
+                        GeneratedField::Password => {
+                            if password__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("password"));
+                            }
+                            password__ = Some(map_.next_value()?);
+                        }
+                    }
+                }
+                Ok(LoginByUsernameRequest {
+                    username: username__.unwrap_or_default(),
+                    password: password__.unwrap_or_default(),
+                })
+            }
+        }
+        deserializer.deserialize_struct("authentication.LoginByUsernameRequest", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for RegisterRequest {

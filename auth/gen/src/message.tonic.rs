@@ -1,15 +1,15 @@
 // @generated
 /// Generated client implementations.
-pub mod messageing_client {
+pub mod messaging_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     ///
     #[derive(Debug, Clone)]
-    pub struct MessageingClient<T> {
+    pub struct MessagingClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl MessageingClient<tonic::transport::Channel> {
+    impl MessagingClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -20,7 +20,7 @@ pub mod messageing_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> MessageingClient<T>
+    impl<T> MessagingClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -38,7 +38,7 @@ pub mod messageing_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> MessageingClient<InterceptedService<T, F>>
+        ) -> MessagingClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -52,7 +52,7 @@ pub mod messageing_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + Send + Sync,
         {
-            MessageingClient::new(InterceptedService::new(inner, interceptor))
+            MessagingClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -104,22 +104,21 @@ pub mod messageing_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/message.Messageing/Message",
+                "/message.Messaging/Message",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("message.Messageing", "Message"));
+            req.extensions_mut().insert(GrpcMethod::new("message.Messaging", "Message"));
             self.inner.unary(req, path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod messageing_server {
+pub mod messaging_server {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
     use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with MessageingServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with MessagingServer.
     #[async_trait]
-    pub trait Messageing: Send + Sync + 'static {
+    pub trait Messaging: Send + Sync + 'static {
         ///
         async fn message(
             &self,
@@ -128,7 +127,7 @@ pub mod messageing_server {
     }
     ///
     #[derive(Debug)]
-    pub struct MessageingServer<T: Messageing> {
+    pub struct MessagingServer<T: Messaging> {
         inner: _Inner<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
@@ -136,7 +135,7 @@ pub mod messageing_server {
         max_encoding_message_size: Option<usize>,
     }
     struct _Inner<T>(Arc<T>);
-    impl<T: Messageing> MessageingServer<T> {
+    impl<T: Messaging> MessagingServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -188,9 +187,9 @@ pub mod messageing_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for MessageingServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for MessagingServer<T>
     where
-        T: Messageing,
+        T: Messaging,
         B: Body + Send + 'static,
         B::Error: Into<StdError> + Send + 'static,
     {
@@ -206,12 +205,10 @@ pub mod messageing_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/message.Messageing/Message" => {
+                "/message.Messaging/Message" => {
                     #[allow(non_camel_case_types)]
-                    struct MessageSvc<T: Messageing>(pub Arc<T>);
-                    impl<
-                        T: Messageing,
-                    > tonic::server::UnaryService<super::MessageRequest>
+                    struct MessageSvc<T: Messaging>(pub Arc<T>);
+                    impl<T: Messaging> tonic::server::UnaryService<super::MessageRequest>
                     for MessageSvc<T> {
                         type Response = super::MessageResponse;
                         type Future = BoxFuture<
@@ -224,7 +221,7 @@ pub mod messageing_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Messageing>::message(&inner, request).await
+                                <T as Messaging>::message(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -267,7 +264,7 @@ pub mod messageing_server {
             }
         }
     }
-    impl<T: Messageing> Clone for MessageingServer<T> {
+    impl<T: Messaging> Clone for MessagingServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -279,7 +276,7 @@ pub mod messageing_server {
             }
         }
     }
-    impl<T: Messageing> Clone for _Inner<T> {
+    impl<T: Messaging> Clone for _Inner<T> {
         fn clone(&self) -> Self {
             Self(Arc::clone(&self.0))
         }
@@ -289,7 +286,7 @@ pub mod messageing_server {
             write!(f, "{:?}", self.0)
         }
     }
-    impl<T: Messageing> tonic::server::NamedService for MessageingServer<T> {
-        const NAME: &'static str = "message.Messageing";
+    impl<T: Messaging> tonic::server::NamedService for MessagingServer<T> {
+        const NAME: &'static str = "message.Messaging";
     }
 }
