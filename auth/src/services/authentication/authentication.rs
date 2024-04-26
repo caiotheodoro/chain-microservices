@@ -1,7 +1,6 @@
-use std::sync::{Arc, Mutex};
-
 use crate::models::user::{NewUser, User};
 use bcrypt::verify;
+use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use protos::authentication::{
     auth_server::Auth, AccessToken, LoginByEmailRequest, LoginByUsernameRequest, RegisterRequest,
@@ -11,14 +10,12 @@ use tonic::{Request, Response, Status};
 use super::generate::generate_token;
 use super::messages::MessageService;
 pub struct Service {
-    database: Arc<Mutex<PgConnection>>,
+    database: Pool<ConnectionManager<PgConnection>>,
 }
 
 impl Service {
-    pub fn new(database: PgConnection) -> Self {
-        Self {
-            database: Arc::new(Mutex::new(database)),
-        }
+    pub fn new(database: Pool<ConnectionManager<PgConnection>>) -> Self {
+        Self { database: database }
     }
 }
 
@@ -30,11 +27,11 @@ impl Auth for Service {
     ) -> Result<Response<AccessToken>, Status> {
         let data = request.into_inner();
 
-        let db = self.database.lock();
+        let mut db = self.database.get().unwrap();
 
-        let user = User::find_by_email(&mut db.unwrap(), &data.email).ok_or(
-            Status::unauthenticated(MessageService::INVALID_EMAIL_OR_PASSWORD),
-        )?;
+        let user = User::find_by_email(&mut db, &data.email).ok_or(Status::unauthenticated(
+            MessageService::INVALID_EMAIL_OR_PASSWORD,
+        ))?;
 
         match verify(data.password, &user.password) {
             Ok(true) => (),
@@ -57,9 +54,9 @@ impl Auth for Service {
     ) -> Result<Response<AccessToken>, Status> {
         let data = request.into_inner();
 
-        let db = self.database.lock();
+        let mut db = self.database.get().unwrap();
 
-        let user = User::find_by_username(&mut db.unwrap(), &data.username).ok_or(
+        let user = User::find_by_username(&mut db, &data.username).ok_or(
             Status::unauthenticated(MessageService::INVALID_USERNAME_OR_PASSWORD),
         )?;
 
@@ -82,7 +79,7 @@ impl Auth for Service {
         &self,
         request: Request<RegisterRequest>,
     ) -> Result<Response<AccessToken>, Status> {
-        let database = self.database.lock();
+        let mut db = self.database.get().unwrap();
         let data = request.into_inner();
 
         let password = bcrypt::hash(&data.password, 10)
@@ -94,7 +91,7 @@ impl Auth for Service {
             password: &password,
         };
 
-        let user = User::create(&mut database.unwrap(), user)
+        let user = User::create(&mut db, user)
             .map_err(|_| Status::already_exists(MessageService::USER_ALREADY_EXISTS))?;
 
         let token = generate_token(user)

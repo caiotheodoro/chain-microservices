@@ -10,4 +10,6 @@ impl MessageService {
     pub const UNAUTHENTICATED: &'static str = "Unauthenticated.";
     pub const NO_ACCESS_TOKEN_SPECIFIED: &'static str = "No access token specified.";
     pub const INVALID_TOKEN: &'static str = "Invalid token.";
+    pub const ERROR_GETTING_USER: &'static str = "Error getting user.";
+    pub const ERROR_GETTING_USERS: &'static str = "Error getting users.";
 }

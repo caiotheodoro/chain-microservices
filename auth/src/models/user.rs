@@ -3,7 +3,7 @@ use diesel::{
     SelectableHelper,
 };
 
-use crate::schema::users;
+use crate::schema::users::{self};
 
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = users)]
@@ -45,5 +45,24 @@ impl User {
             .filter(users::dsl::username.eq(username))
             .first(conn)
             .ok()
+    }
+
+    pub fn get_user(conn: &mut PgConnection, user_id: &i32) -> Option<User> {
+        users::dsl::users.find(user_id).first(conn).ok()
+    }
+    pub fn list_users(conn: &mut PgConnection) -> Result<Vec<User>, Box<dyn std::error::Error>> {
+        let users = users::dsl::users.load::<(i32, String, String, String)>(conn)?;
+
+        let users: Vec<User> = users
+            .into_iter()
+            .map(|(user_id, username, email, _)| User {
+                id: user_id,
+                username,
+                email,
+                password: String::new(),
+            })
+            .collect();
+
+        Ok(users)
     }
 }
