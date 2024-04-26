@@ -5,9 +5,10 @@ edition = "2021"
 
 [features]
 default = ["proto_full"]
-proto_full = ["authentication", "message"]
+proto_full = ["authentication", "message", "client"]
 "authentication" = []
 "message" = []
+"client" = []
 
 [dependencies]
 bytes = "1.1.0"
