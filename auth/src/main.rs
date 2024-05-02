@@ -6,11 +6,14 @@ use protos::authentication::{
 
 use protos::{client::client_server::ClientServer, message::messaging_server::MessagingServer};
 use services::db::get_pool;
+use services::redis::connect::connect_redis;
+use services::redis::redis::RedisCache;
 use services::{
     authentication::authentication::Service as AuthService,
     client::client::Service as ClientService, db::connect_db,
     message::message::Service as MessageService,
 };
+
 use tonic::transport::Server;
 
 mod models;
@@ -24,8 +27,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pool = get_pool();
     let _conn = connect_db();
     let address = "[::1]:50051".parse()?;
+    let redis = connect_redis();
 
-    let authentication_service: AuthService = AuthService::new(pool.clone());
+    // let connection = redis.get_connection().unwrap();
+
+    println!("Connected to Redis");
+
+    let authentication_service: AuthService = AuthService::new(
+        pool.clone(),
+        Box::new(RedisCache {
+            redis_client: redis.clone(),
+        }),
+    );
     let client_service: ClientService = ClientService::new(pool.clone());
     let message_service: MessageService = MessageService::default();
     let service = tonic_reflection::server::Builder::configure()
