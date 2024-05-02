@@ -1,4 +1,4 @@
-use crate::models::user::{NewUser, User};
+use crate::models::user::{IUserCache, NewUser, User};
 use bcrypt::verify;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
@@ -11,11 +11,18 @@ use super::generate::generate_token;
 use super::messages::MessageService;
 pub struct Service {
     database: Pool<ConnectionManager<PgConnection>>,
+    cache: Box<dyn IUserCache + Send + Sync>,
 }
 
 impl Service {
-    pub fn new(database: Pool<ConnectionManager<PgConnection>>) -> Self {
-        Self { database: database }
+    pub fn new(
+        database: Pool<ConnectionManager<PgConnection>>,
+        cache: Box<dyn IUserCache + Sync + Send>,
+    ) -> Self {
+        Self {
+            database: database,
+            cache: cache,
+        }
     }
 }
 
@@ -42,8 +49,14 @@ impl Auth for Service {
             }
         };
 
-        let reply = generate_token(user)
+        let reply = generate_token(&user)
             .map_err(|_| Status::unauthenticated(MessageService::UNAUTHENTICATED))?;
+
+        let _cache = self
+            .cache
+            .set_exp(&reply.access_token.to_string(), &user.id.to_string(), 3600)
+            .await
+            .map_err(|err| tonic::Status::unauthenticated(err.to_string()))?;
 
         Ok(Response::new(reply))
     }
@@ -69,8 +82,19 @@ impl Auth for Service {
             }
         };
 
-        let reply = generate_token(user)
+        let reply = generate_token(&user)
             .map_err(|_| Status::unauthenticated(MessageService::UNAUTHENTICATED))?;
+
+        match self
+            .cache
+            .set_exp(&reply.access_token.to_string(), &user.id.to_string(), 3600)
+            .await
+        {
+            Ok(_) => {}
+            Err(err) => {
+                return Err(Status::unauthenticated(err.to_string()));
+            }
+        }
 
         Ok(Response::new(reply))
     }
@@ -94,7 +118,7 @@ impl Auth for Service {
         let user = User::create(&mut db, user)
             .map_err(|_| Status::already_exists(MessageService::USER_ALREADY_EXISTS))?;
 
-        let token = generate_token(user)
+        let token = generate_token(&user)
             .map_err(|_| Status::unknown(MessageService::ERROR_GENERATING_TOKEN))?;
 
         Ok(Response::new(token))

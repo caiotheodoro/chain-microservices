@@ -15,7 +15,7 @@ use super::messages::MessageService;
 
 pub struct GenerateClaimsError;
 
-pub fn generate_claims(user: User) -> Result<BTreeMap<&'static str, String>, GenerateClaimsError> {
+pub fn generate_claims(user: &User) -> Result<BTreeMap<&'static str, String>, GenerateClaimsError> {
     let mut claims: BTreeMap<&str, String> = BTreeMap::new();
 
     claims.insert("sub", user.id.to_string());
@@ -32,7 +32,7 @@ pub fn generate_claims(user: User) -> Result<BTreeMap<&'static str, String>, Gen
 }
 pub struct GenerateTokenError;
 
-pub fn generate_token(user: User) -> Result<AccessToken, GenerateTokenError> {
+pub fn generate_token(user: &User) -> Result<AccessToken, GenerateTokenError> {
     let app_key: String = env::var("APP_KEY").expect(MessageService::APP_KEY_MISSING);
     let claims = generate_claims(user).map_err(|_| GenerateTokenError)?;
     let key: Hmac<Sha256> =
