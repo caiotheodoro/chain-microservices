@@ -2,6 +2,7 @@ use diesel::{
     ExpressionMethods, Insertable, PgConnection, QueryDsl, Queryable, RunQueryDsl, Selectable,
     SelectableHelper,
 };
+use std::error::Error;
 
 use crate::schema::users::{self};
 
@@ -65,4 +66,16 @@ impl User {
 
         Ok(users)
     }
+}
+
+#[tonic::async_trait]
+pub trait IUserCache {
+    async fn set_exp(
+        &self,
+        key: &String,
+        value: &String,
+        seconds: usize,
+    ) -> Result<(), Box<dyn Error>>;
+    async fn del_val_for_key(&self, keys: &String) -> Result<u64, Box<dyn Error>>;
+    async fn get_val(&self, key: &String) -> Result<Option<String>, Box<dyn Error>>;
 }
