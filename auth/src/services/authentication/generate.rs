@@ -6,7 +6,7 @@ use std::{
 
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
-use protos::authentication::AccessToken;
+use protos::authentication::TokenResponse;
 use sha2::Sha256;
 
 use crate::models::user::User;
@@ -32,15 +32,30 @@ pub fn generate_claims(user: &User) -> Result<BTreeMap<&'static str, String>, Ge
 }
 pub struct GenerateTokenError;
 
-pub fn generate_token(user: &User) -> Result<AccessToken, GenerateTokenError> {
-    let app_key: String = env::var("APP_KEY").expect(MessageService::APP_KEY_MISSING);
+pub fn generate_token(user: &User) -> Result<TokenResponse, GenerateTokenError> {
+    let access_key: String = env::var("ACCESS_KEY").expect(MessageService::APP_KEY_MISSING);
+    let refresh_key: String = env::var("REFRESH_KEY").expect(MessageService::APP_KEY_MISSING);
+
     let claims = generate_claims(user).map_err(|_| GenerateTokenError)?;
-    let key: Hmac<Sha256> =
-        Hmac::new_from_slice(app_key.as_bytes()).map_err(|_| GenerateTokenError)?;
 
-    let access_token = claims.sign_with_key(&key).map_err(|_| GenerateTokenError)?;
+    let access_key: Hmac<Sha256> =
+        Hmac::new_from_slice(access_key.as_bytes()).map_err(|_| GenerateTokenError)?;
 
-    Ok(AccessToken {
+    let refresh_key: Hmac<Sha256> =
+        Hmac::new_from_slice(refresh_key.as_bytes()).map_err(|_| GenerateTokenError)?;
+
+    let access_token = claims
+        .clone()
+        .sign_with_key(&access_key)
+        .map_err(|_| GenerateTokenError)?;
+
+    let refresh_token = claims
+        .clone()
+        .sign_with_key(&refresh_key)
+        .map_err(|_| GenerateTokenError)?;
+
+    Ok(TokenResponse {
         access_token: access_token,
+        refresh_token: refresh_token,
     })
 }
