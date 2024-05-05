@@ -1,14 +1,13 @@
+use super::generate::generate_token;
+use super::messages::MessageService;
 use crate::models::user::{IUserCache, NewUser, User};
 use bcrypt::verify;
 use diesel::r2d2::{ConnectionManager, Pool};
 use diesel::PgConnection;
 use protos::authentication::{
-    auth_server::Auth, AccessToken, LoginByEmailRequest, LoginByUsernameRequest, RegisterRequest,
+    auth_server::Auth, LoginByEmailRequest, LoginByUsernameRequest, RegisterRequest, TokenResponse,
 };
 use tonic::{Request, Response, Status};
-
-use super::generate::generate_token;
-use super::messages::MessageService;
 pub struct Service {
     database: Pool<ConnectionManager<PgConnection>>,
     cache: Box<dyn IUserCache + Send + Sync>,
@@ -31,7 +30,7 @@ impl Auth for Service {
     async fn login_by_email(
         &self,
         request: Request<LoginByEmailRequest>,
-    ) -> Result<Response<AccessToken>, Status> {
+    ) -> Result<Response<TokenResponse>, Status> {
         let data = request.into_inner();
 
         let mut db = self.database.get().unwrap();
@@ -64,7 +63,7 @@ impl Auth for Service {
     async fn login_by_username(
         &self,
         request: Request<LoginByUsernameRequest>,
-    ) -> Result<Response<AccessToken>, Status> {
+    ) -> Result<Response<TokenResponse>, Status> {
         let data = request.into_inner();
 
         let mut db = self.database.get().unwrap();
@@ -87,7 +86,7 @@ impl Auth for Service {
 
         match self
             .cache
-            .set_exp(&reply.access_token.to_string(), &user.id.to_string(), 3600)
+            .set_exp(&reply.refresh_token.to_string(), &user.id.to_string(), 3600)
             .await
         {
             Ok(_) => {}
@@ -102,7 +101,7 @@ impl Auth for Service {
     async fn register(
         &self,
         request: Request<RegisterRequest>,
-    ) -> Result<Response<AccessToken>, Status> {
+    ) -> Result<Response<TokenResponse>, Status> {
         let mut db = self.database.get().unwrap();
         let data = request.into_inner();
 
@@ -122,5 +121,33 @@ impl Auth for Service {
             .map_err(|_| Status::unknown(MessageService::ERROR_GENERATING_TOKEN))?;
 
         Ok(Response::new(token))
+    }
+    async fn refresh_token(
+        &self,
+        request: Request<TokenResponse>,
+    ) -> Result<Response<TokenResponse>, Status> {
+        let request = request.into_inner();
+
+        match self.cache.get_val(&request.refresh_token).await {
+            Ok(Some(user_id)) => {
+                let user_id = user_id
+                    .parse::<i32>()
+                    .map_err(|_| Status::unauthenticated(MessageService::INVALID_REFRESH_TOKEN))?;
+
+                let mut db = self.database.get().unwrap();
+                let user = User::get_user(&mut db, &user_id).ok_or_else(|| {
+                    Status::unauthenticated(MessageService::INVALID_REFRESH_TOKEN)
+                })?;
+
+                let token = generate_token(&user)
+                    .map_err(|_| Status::unknown(MessageService::ERROR_GENERATING_TOKEN))?;
+
+                Ok(Response::new(token))
+            }
+            Ok(None) => Err(Status::unauthenticated(
+                MessageService::INVALID_REFRESH_TOKEN,
+            )),
+            Err(err) => Err(Status::unknown(err.to_string())),
+        }
     }
 }
