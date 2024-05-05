@@ -2,8 +2,9 @@ syntax = "proto3";
 
 package authentication;
 
-message AccessToken {
+message TokenResponse {
   string access_token = 1;
+  string refresh_token = 2;
 }
 message RegisterRequest {
   string username = 1;
@@ -21,7 +22,8 @@ message LoginByUsernameRequest {
 }
 
 service Auth {
-  rpc Register(RegisterRequest) returns (AccessToken);
-  rpc LoginByEmail(LoginByEmailRequest) returns (AccessToken);
-  rpc LoginByUsername(LoginByUsernameRequest) returns (AccessToken);
+  rpc Register(RegisterRequest) returns (TokenResponse);
+  rpc LoginByEmail(LoginByEmailRequest) returns (TokenResponse);
+  rpc LoginByUsername(LoginByUsernameRequest) returns (TokenResponse);
+  rpc RefreshToken(TokenResponse) returns (TokenResponse);
 }
