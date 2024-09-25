@@ -1,0 +1,72 @@
+version: "3.8"
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  auth-service:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    ports:
+      - "50051:50051"
+    depends_on:
+      - authdb
+      - redis
+    environment:
+      - DATABASE_URL=postgres://postgres:1234@authdb:5432/postgres
+      - REDIS_URL=redis://redis:6379
+
+  report-service:
+    build:
+      context: ./report/report-service
+      dockerfile: Dockerfile
+    ports:
+      - "50052:50052"
+    depends_on:
+      - report-db
+      - kafka
+    environment:
+      - DATABASE_HOST_NAME=report-db
+      - DATABASE_PORT=27017
+      - KAFKA_BROKERS=kafka:9092
+
+  authdb:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  report-db:
+    image: mongo:latest
+    volumes:
+      - mongodata:/data/db
+
+  redis:
+    image: redis:latest
+
+volumes:
+  pgdata:
+  mongodata:
